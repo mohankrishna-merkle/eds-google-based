@@ -1,0 +1,15 @@
+indices:
+  sitemap:
+    source: html
+    include:
+      - '/**'
+    properties:
+      path:
+        select: head > meta[name="path"]
+        value: @path
+      lastmod:
+        select: head > meta[name="last-modified"]
+        value: parseTimestamp(@last-modified, 'YYYY-MM-DD HH:mm:ss')
+      robots:
+        select: head > meta[name="robots"]
+        value: @content
