@@ -82,12 +82,6 @@
     gap: var(--gap-spacing);
   }
 
-  &.center {
-    .default-content {
-      text-align: center;
-    }
-  }
-
   > .default-content {
     margin-bottom: calc(var(--top-bottom-spacing) / 3);
 
@@ -97,6 +91,12 @@
 
     > *:last-child {
       margin-bottom: 0;
+    }
+  }
+
+  &.center {
+    .default-content {
+      text-align: center;
     }
   }
 
