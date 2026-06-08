@@ -1,5 +1,5 @@
 indices:
-  products:
+  products: &default
     include:
       - /products/**
 
