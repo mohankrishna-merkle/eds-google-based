@@ -6,9 +6,6 @@ indices:
     target: /products.json
 
     properties:
-      path:
-      select: canonical
-
       title:
         select: meta[name="title"]
         value: content
