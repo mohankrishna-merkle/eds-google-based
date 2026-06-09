@@ -150,7 +150,7 @@ function sortProducts(data, sort) {
  */
 export default async function decorate(block) {
   const config = readBlockConfig(block);
-  const source = config['index-source'] || config.source || block.querySelector('a[href]')?.href || '/query-index.json';
+  const source = config['index-source'] || config.source || block.querySelector('a[href]')?.href || '/query-index.json' || '/products.json';
   const categoryFilter = config.category || '';
   const limit = parseInt(config.limit || '0', 10) || 0;
   const sectionTitle = config.title || 'Shop all products';
