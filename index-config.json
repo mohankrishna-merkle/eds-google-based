@@ -3,7 +3,7 @@
     "products": {
       "include": ["/products/**"],
       "exclude": ["/products/index"],
-      "target": "/query-index.json",
+      "target": "/products.json",
       "properties": {
         "title": { "select": "head > meta[property='og:title']", "value": "attribute(el, 'content')" },
         "description": { "select": "head > meta[name='description']", "value": "attribute(el, 'content')" },
@@ -14,8 +14,4 @@
       }
     }
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> c90654f (products blocks)
