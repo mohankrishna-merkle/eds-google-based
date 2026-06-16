@@ -1,4 +1,5 @@
 import { createOptimizedPicture, getMetadata } from '../../scripts/aem.js';
+import { addToCart, parsePrice } from '../../scripts/cart.js';
 
 /**
  * @param {string} value
@@ -101,6 +102,76 @@ function parseProductContent(block) {
 
 /**
  * @param {object} product
+ * @returns {string}
+ */
+function getProductImageUrl(product) {
+  const img = product.imageRow?.querySelector('picture img, img');
+  return img?.getAttribute('src') || getMetadata('og:image') || '';
+}
+
+/**
+ * @param {object} product
+ * @returns {object}
+ */
+function buildCartProduct(product) {
+  return {
+    id: product.sku || window.location.pathname,
+    title: product.title,
+    price: parsePrice(product.price),
+    image: getProductImageUrl(product),
+    path: window.location.pathname,
+  };
+}
+
+/**
+ * @returns {HTMLElement}
+ */
+function createQuantityControl() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'product-detail-quantity';
+
+  const label = document.createElement('label');
+  label.setAttribute('for', 'product-detail-qty');
+  label.textContent = 'Quantity';
+
+  const controls = document.createElement('div');
+  controls.className = 'product-detail-quantity-controls';
+
+  const input = document.createElement('input');
+  input.id = 'product-detail-qty';
+  input.type = 'number';
+  input.min = '1';
+  input.max = '99';
+  input.value = '1';
+  input.setAttribute('aria-label', 'Product quantity');
+
+  const decrease = document.createElement('button');
+  decrease.type = 'button';
+  decrease.className = 'product-detail-qty-btn';
+  decrease.setAttribute('aria-label', 'Decrease quantity');
+  decrease.textContent = '−';
+
+  const increase = document.createElement('button');
+  increase.type = 'button';
+  increase.className = 'product-detail-qty-btn';
+  increase.setAttribute('aria-label', 'Increase quantity');
+  increase.textContent = '+';
+
+  decrease.addEventListener('click', () => {
+    input.value = String(Math.max(1, parseInt(input.value, 10) - 1 || 1));
+  });
+
+  increase.addEventListener('click', () => {
+    input.value = String(Math.min(99, parseInt(input.value, 10) + 1 || 1));
+  });
+
+  controls.append(decrease, input, increase);
+  wrapper.append(label, controls);
+  return wrapper;
+}
+
+/**
+ * @param {object} product
  */
 function setProductJsonLd(product) {
   const scriptId = 'product-detail-jsonld';
@@ -193,6 +264,9 @@ export default async function decorate(block) {
     info.append(description);
   }
 
+  const quantityControl = createQuantityControl();
+  info.append(quantityControl);
+
   const actions = document.createElement('div');
   actions.className = 'product-detail-actions';
   if (product.cta) {
@@ -205,8 +279,16 @@ export default async function decorate(block) {
     cta.className = 'button primary';
     cta.textContent = 'Add to cart';
     cta.addEventListener('click', () => {
+      const qtyInput = block.querySelector('#product-detail-qty');
+      const quantity = parseInt(qtyInput?.value, 10) || 1;
+      addToCart(buildCartProduct(product), quantity);
+      const originalText = 'Add to cart';
       cta.textContent = 'Added to cart';
       cta.disabled = true;
+      window.setTimeout(() => {
+        cta.textContent = originalText;
+        cta.disabled = false;
+      }, 2000);
     });
     actions.append(cta);
   }
