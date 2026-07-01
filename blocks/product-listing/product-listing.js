@@ -41,6 +41,12 @@ function formatPrice(value) {
 //   return date.getTime();
 // }
 
+function excelSerialToDate(serial) {
+  const utcDays = Math.floor(serial - 25569);
+  const utcValue = utcDays * 86400;
+  return new Date(utcValue * 1000);
+} 
+
 function parseDate(value) {
   if (!value) return 0;
 
@@ -58,11 +64,7 @@ function parseDate(value) {
   return 0;
 }
 
-function excelSerialToDate(serial) {
-  const utcDays = Math.floor(serial - 25569);
-  const utcValue = utcDays * 86400;
-  return new Date(utcValue * 1000);
-}
+
 
 function formatPublishDate(value) {
   if (!value) return '';
@@ -299,7 +301,7 @@ export default async function decorate(block) {
     ['featured', 'Featured'],
     ['latest', 'Latest'],
     ['oldest', 'Oldest'],
-    ['title', 'Name A–Z']
+    ['title', 'Name A–Z'],
   ].forEach(([value, label]) => {
     const option = document.createElement('option');
     option.value = value;

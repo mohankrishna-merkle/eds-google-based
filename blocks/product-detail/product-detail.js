@@ -1,19 +1,6 @@
 import { createOptimizedPicture, getMetadata } from '../../scripts/aem.js';
 // import { addToCart, parsePrice } from '../../scripts/cart.js';
 
-/**
- * @param {string} value
- * @returns {string}
- */
-/*function formatPrice(value) {
-  if (!value) return '';
-  const numeric = parseFloat(String(value).replace(/[^0-9.]/g, ''));
-  if (Number.isNaN(numeric)) return value;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(numeric);
-}*/
 
 /**
  * @param {Element} row
@@ -62,13 +49,13 @@ function parseProductContent(block) {
     const cells = [...metaRow.children];
     content.category = cells[0]?.textContent?.trim() || '';
   }
-  
-  const publishedRow = rows[3];
-  if (publishedRow) {
-    const cells = [...publishedRow.children];
-    content.publishDate = cells[0]?.textContent?.trim() || '';
-    content.published_by = cells[1]?.textContent?.trim() || '';
-  }
+
+  // const publishedRow = rows[3];
+  // if (publishedRow) {
+  //   const cells = [...publishedRow.children];
+  //   content.publishDate = cells[0]?.textContent?.trim() || '';
+  //   content.published_by = cells[1]?.textContent?.trim() || '';
+  // }
 
   const descriptionRow = rows[4];
   if (descriptionRow) {
@@ -93,19 +80,11 @@ function parseProductContent(block) {
   // if (!content.price) content.price = getMetadata('price');
   if (!content.category) content.category = getMetadata('category');
   if (!content.published_by) {
-    content.published_by =
-      getMetadata('published-by')
-      || getMetadata('published_by')
-      || getMetadata('author')
-      || '';
+    content.published_by = getMetadata('published-by') || getMetadata('published_by') || getMetadata('author') || '';
   }
 
   if (!content.publishDate) {
-    content.publishDate =
-      getMetadata('publish-date')
-      || getMetadata('publishdate')
-      || getMetadata('publish_date')
-      || '';
+    content.publishDate = getMetadata('publish-date') || getMetadata('publishdate') || getMetadata('publish_date') || '';
   }
   if (!content.description) {
     const desc = getMetadata('description');
@@ -117,7 +96,6 @@ function parseProductContent(block) {
       content.description.append(p);
     }
   }
-
   return content;
 }
 
@@ -125,16 +103,16 @@ function parseProductContent(block) {
  * @param {object} product
  * @returns {string}
  */
-function getProductImageUrl(product) {
+/* function getProductImageUrl(product) {
   const img = product.imageRow?.querySelector('picture img, img');
   return img?.getAttribute('src') || getMetadata('og:image') || '';
-}
+} */
 
 /**
  * @param {object} product
  * @returns {object}
  */
-/*function buildCartProduct(product) {
+/* function buildCartProduct(product) {
   return {
     id: product.sku || window.location.pathname,
     title: product.title,
@@ -142,12 +120,12 @@ function getProductImageUrl(product) {
     image: getProductImageUrl(product),
     path: window.location.pathname,
   };
-}*/
+} */
 
 /**
  * @returns {HTMLElement}
  */
-/*function createQuantityControl() {
+/* function createQuantityControl() {
   const wrapper = document.createElement('div');
   wrapper.className = 'product-detail-quantity';
 
@@ -189,12 +167,12 @@ function getProductImageUrl(product) {
   controls.append(decrease, input, increase);
   wrapper.append(label, controls);
   return wrapper;
-}*/
+} */
 
 /**
  * @param {object} product
  */
-/*function setProductJsonLd(product) {
+/* function setProductJsonLd(product) {
   const scriptId = 'product-detail-jsonld';
   if (document.getElementById(scriptId)) return;
 
@@ -263,12 +241,12 @@ export default async function decorate(block) {
     info.append(title);
   }
 
-  /*if (product.sku) {
+  /* if (product.sku) {
     const sku = document.createElement('p');
     sku.className = 'product-detail-sku';
     sku.innerHTML = `<span>SKU</span> ${product.sku}`;
     info.append(sku);
-  }*/
+  } */
 
   if (product.published_by || product.publishDate) {
     const meta = document.createElement('div');
@@ -286,7 +264,6 @@ export default async function decorate(block) {
           year: 'numeric',
         },
       );
-
       meta.append(date);
     }
 
@@ -303,21 +280,16 @@ export default async function decorate(block) {
       meta.append(author);
     }
 
-    
-
     info.append(meta);
   }
 
-
-
-
-  /*if (product.price) {
+  /* if (product.price) {
     const price = document.createElement('p');
     price.className = 'product-detail-price';
     price.setAttribute('aria-label', 'Price');
     // price.textContent = formatPrice(product.price);
     info.append(price);
-  }*/
+  } */
 
   if (product.description) {
     const description = document.createElement('div');
