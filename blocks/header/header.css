@@ -1,9 +1,13 @@
 /* header and nav layout */
 header .nav-wrapper {
-  background-color: var(--background-color);
-  width: 100%;
-  z-index: 2;
-  position: fixed;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background: var(--background-color);
+    padding: 20px;
+    box-shadow:
+        0 4px 14px rgba(0,0,0,.08),
+        0 8px 24px rgba(255,71,19,.08);
 }
 
 header nav {
@@ -270,3 +274,35 @@ header nav .nav-sections ul > li > ul > li {
 header nav .nav-tools {
   grid-area: tools;
 }
+
+/* ===========================
+   Logo
+=========================== */
+
+header .nav-brand a {
+  position: relative;
+  display: inline-block;
+  color: #111 !important;
+  text-decoration: none;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Orange underline */
+header .nav-brand a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 3px;
+  background: var(--link-color);
+  transition: width 0.3s ease;
+}
+
+/* Hover */
+header .nav-brand a:hover::after {
+  width: 100%;
+}
+
