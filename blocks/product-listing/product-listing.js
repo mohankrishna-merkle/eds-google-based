@@ -29,6 +29,67 @@ function formatPrice(value) {
   }).format(numeric);
 }
 
+// function parseDate(dateString) {
+//   if (!dateString) return 0;
+
+//   const date = new Date(dateString);
+
+//   if (Number.isNaN(date.getTime())) {
+//     return 0;
+//   }
+
+//   return date.getTime();
+// }
+
+function parseDate(value) {
+  if (!value) return 0;
+
+  // Excel serial number
+  if (!Number.isNaN(Number(value))) {
+    return excelSerialToDate(Number(value)).getTime();
+  }
+
+  const date = new Date(value);
+
+  if (!Number.isNaN(date.getTime())) {
+    return date.getTime();
+  }
+
+  return 0;
+}
+
+function excelSerialToDate(serial) {
+  const utcDays = Math.floor(serial - 25569);
+  const utcValue = utcDays * 86400;
+  return new Date(utcValue * 1000);
+}
+
+function formatPublishDate(value) {
+  if (!value) return '';
+
+  // Excel / Google Sheet serial number
+  if (!Number.isNaN(Number(value))) {
+    return excelSerialToDate(Number(value)).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  // Normal date string
+  const date = new Date(value);
+
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  return value;
+}
+
 /**
  * @param {object} item
  * @param {string} headingTag
@@ -64,6 +125,36 @@ function renderProductCard(item, headingTag) {
     title.className = 'product-listing-card-title';
     title.textContent = item.title;
     body.append(title);
+  }
+
+  /* new section */
+
+  if (item.publishDate || item.published_by) {
+    const meta = document.createElement('div');
+    meta.className = 'product-listing-card-meta';
+
+    if (item.publishDate) {
+      const date = document.createElement('span');
+      date.className = 'product-listing-card-date';
+      date.textContent = formatPublishDate(item.publishDate);
+      meta.append(date);
+    }
+
+    if (item.publishDate && item.published_by) {
+      const divider = document.createElement('span');
+      divider.className = 'product-listing-card-divider';
+      divider.textContent = '|';
+      meta.append(divider);
+    }
+
+    if (item.published_by) {
+      const author = document.createElement('span');
+      author.className = 'product-listing-card-author';
+      author.textContent = `By ${item.published_by}`;
+      meta.append(author);
+    }
+
+    body.append(meta);
   }
 
   if (item.description) {
@@ -121,6 +212,7 @@ function filterProducts(data, query, category) {
       (item.title || '').toLowerCase().includes(terms)
       || (item.description || '').toLowerCase().includes(terms)
       || (item.category || '').toLowerCase().includes(terms)
+      || (item.published_by || '').toLowerCase().includes(terms)
     ));
   }
 
@@ -134,13 +226,32 @@ function filterProducts(data, query, category) {
  */
 function sortProducts(data, sort) {
   const items = [...data];
-  if (sort === 'price-asc') {
-    items.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
-  } else if (sort === 'price-desc') {
-    items.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
-  } else if (sort === 'title') {
-    items.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+
+  switch (sort) {
+    case 'latest':
+      items.sort((a, b) => parseDate(b.publishDate) - parseDate(a.publishDate));
+      break;
+
+    case 'oldest':
+      items.sort((a, b) => parseDate(a.publishDate) - parseDate(b.publishDate));
+      break;
+
+    case 'title':
+      items.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      break;
+
+    case 'price-asc':
+      items.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+      break;
+
+    case 'price-desc':
+      items.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+      break;
+
+    default:
+      break;
   }
+
   return items;
 }
 
@@ -153,7 +264,7 @@ export default async function decorate(block) {
   const source = config['index-source'] || config.source || block.querySelector('a[href]')?.href || '/query-index.json' || '/products/query-index.json';
   const categoryFilter = config.category || '';
   const limit = parseInt(config.limit || '0', 10) || 0;
-  const sectionTitle = config.title || 'Shop all products';
+  // const sectionTitle = config.title || 'Shop all articles';
   const headingTag = findHeadingTag(block);
 
   block.textContent = '';
@@ -164,7 +275,7 @@ export default async function decorate(block) {
 
   const title = document.createElement('h2');
   title.className = 'product-listing-title';
-  title.textContent = sectionTitle;
+  // title.textContent = sectionTitle;
   header.append(title);
 
   const toolbar = document.createElement('div');
@@ -173,8 +284,8 @@ export default async function decorate(block) {
   const search = document.createElement('input');
   search.type = 'search';
   search.className = 'product-listing-search';
-  search.placeholder = 'Search products';
-  search.setAttribute('aria-label', 'Search products');
+  search.placeholder = 'Search articles...';
+  search.setAttribute('aria-label', 'Search articles');
 
   const categorySelect = document.createElement('select');
   categorySelect.className = 'product-listing-category';
@@ -183,12 +294,12 @@ export default async function decorate(block) {
 
   const sortSelect = document.createElement('select');
   sortSelect.className = 'product-listing-sort';
-  sortSelect.setAttribute('aria-label', 'Sort products');
+  sortSelect.setAttribute('aria-label', 'Sort articles');
   [
     ['featured', 'Featured'],
-    ['title', 'Name A–Z'],
-    ['price-asc', 'Price: Low to High'],
-    ['price-desc', 'Price: High to Low'],
+    ['latest', 'Latest'],
+    ['oldest', 'Oldest'],
+    ['title', 'Name A–Z']
   ].forEach(([value, label]) => {
     const option = document.createElement('option');
     option.value = value;
@@ -213,7 +324,7 @@ export default async function decorate(block) {
   block.classList.remove('product-listing-loading');
 
   if (!data?.length) {
-    status.textContent = 'No products found. Publish product pages with price and image metadata.';
+    status.textContent = 'No articles found. Publish product pages with price and image metadata.';
     return;
   }
 
@@ -249,7 +360,7 @@ export default async function decorate(block) {
     if (limit > 0) items = items.slice(0, limit);
 
     if (!items.length) {
-      status.textContent = 'No products match your filters.';
+      status.textContent = 'No articles match your filters.';
       grid.setAttribute('aria-hidden', 'true');
       return;
     }

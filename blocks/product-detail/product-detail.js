@@ -1,11 +1,11 @@
 import { createOptimizedPicture, getMetadata } from '../../scripts/aem.js';
-import { addToCart, parsePrice } from '../../scripts/cart.js';
+// import { addToCart, parsePrice } from '../../scripts/cart.js';
 
 /**
  * @param {string} value
  * @returns {string}
  */
-function formatPrice(value) {
+/*function formatPrice(value) {
   if (!value) return '';
   const numeric = parseFloat(String(value).replace(/[^0-9.]/g, ''));
   if (Number.isNaN(numeric)) return value;
@@ -13,7 +13,7 @@ function formatPrice(value) {
     style: 'currency',
     currency: 'USD',
   }).format(numeric);
-}
+}*/
 
 /**
  * @param {Element} row
@@ -41,10 +41,11 @@ function parseProductContent(block) {
   const content = {
     imageRow: rows[0],
     title: '',
-    price: '',
     category: '',
-    sku: '',
-    description: null,
+    published_by: '',
+    publishDate: '',
+    description: '',
+    image: null,
     cta: null,
   };
 
@@ -53,18 +54,23 @@ function parseProductContent(block) {
     const cells = [...titleRow.children];
     const titleEl = cells[0]?.querySelector('h1, h2, h3, h4, h5, h6') || cells[0]?.querySelector('p, strong');
     content.title = titleEl?.textContent?.trim() || cells[0]?.textContent?.trim() || '';
-    const priceEl = cells[1]?.querySelector('p, strong, em') || cells[1];
-    content.price = priceEl?.textContent?.trim() || '';
+
   }
 
   const metaRow = rows[2];
   if (metaRow) {
     const cells = [...metaRow.children];
     content.category = cells[0]?.textContent?.trim() || '';
-    content.sku = cells[1]?.textContent?.trim() || '';
+  }
+  
+  const publishedRow = rows[3];
+  if (publishedRow) {
+    const cells = [...publishedRow.children];
+    content.publishDate = cells[0]?.textContent?.trim() || '';
+    content.published_by = cells[1]?.textContent?.trim() || '';
   }
 
-  const descriptionRow = rows[3];
+  const descriptionRow = rows[4];
   if (descriptionRow) {
     const cell = descriptionRow.firstElementChild || descriptionRow;
     if (cell?.querySelector('p, ul, ol')) {
@@ -78,14 +84,29 @@ function parseProductContent(block) {
     }
   }
 
-  const ctaRow = rows[4];
-  if (ctaRow) {
-    content.cta = ctaRow.querySelector('a') || ctaRow.querySelector('p a');
-  }
+  // const ctaRow = rows[4];
+  // if (ctaRow) {
+  //   content.cta = ctaRow.querySelector('a') || ctaRow.querySelector('p a');
+  // }
 
   if (!content.title) content.title = getMetadata('og:title') || document.querySelector('main h1')?.textContent?.trim() || '';
-  if (!content.price) content.price = getMetadata('price');
+  // if (!content.price) content.price = getMetadata('price');
   if (!content.category) content.category = getMetadata('category');
+  if (!content.published_by) {
+    content.published_by =
+      getMetadata('published-by')
+      || getMetadata('published_by')
+      || getMetadata('author')
+      || '';
+  }
+
+  if (!content.publishDate) {
+    content.publishDate =
+      getMetadata('publish-date')
+      || getMetadata('publishdate')
+      || getMetadata('publish_date')
+      || '';
+  }
   if (!content.description) {
     const desc = getMetadata('description');
     if (desc) {
@@ -113,7 +134,7 @@ function getProductImageUrl(product) {
  * @param {object} product
  * @returns {object}
  */
-function buildCartProduct(product) {
+/*function buildCartProduct(product) {
   return {
     id: product.sku || window.location.pathname,
     title: product.title,
@@ -121,12 +142,12 @@ function buildCartProduct(product) {
     image: getProductImageUrl(product),
     path: window.location.pathname,
   };
-}
+}*/
 
 /**
  * @returns {HTMLElement}
  */
-function createQuantityControl() {
+/*function createQuantityControl() {
   const wrapper = document.createElement('div');
   wrapper.className = 'product-detail-quantity';
 
@@ -168,12 +189,12 @@ function createQuantityControl() {
   controls.append(decrease, input, increase);
   wrapper.append(label, controls);
   return wrapper;
-}
+}*/
 
 /**
  * @param {object} product
  */
-function setProductJsonLd(product) {
+/*function setProductJsonLd(product) {
   const scriptId = 'product-detail-jsonld';
   if (document.getElementById(scriptId)) return;
 
@@ -199,7 +220,7 @@ function setProductJsonLd(product) {
   script.type = 'application/ld+json';
   script.textContent = JSON.stringify(schema);
   document.head.append(script);
-}
+} */
 
 /**
  * loads and decorates the product detail block
@@ -242,20 +263,61 @@ export default async function decorate(block) {
     info.append(title);
   }
 
-  if (product.sku) {
+  /*if (product.sku) {
     const sku = document.createElement('p');
     sku.className = 'product-detail-sku';
     sku.innerHTML = `<span>SKU</span> ${product.sku}`;
     info.append(sku);
+  }*/
+
+  if (product.published_by || product.publishDate) {
+    const meta = document.createElement('div');
+    meta.className = 'article-meta';
+
+    if (product.publishDate) {
+      const date = document.createElement('span');
+      date.className = 'article-date';
+
+      date.textContent = new Date(product.publishDate).toLocaleDateString(
+        'en-US',
+        {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        },
+      );
+
+      meta.append(date);
+    }
+
+    if (product.published_by && product.publishDate) {
+      const dot = document.createElement('span');
+      dot.textContent = '|';
+      meta.append(dot);
+    }
+
+    if (product.published_by) {
+      const author = document.createElement('span');
+      author.className = 'article-author';
+      author.textContent = `By ${product.published_by}`;
+      meta.append(author);
+    }
+
+    
+
+    info.append(meta);
   }
 
-  if (product.price) {
+
+
+
+  /*if (product.price) {
     const price = document.createElement('p');
     price.className = 'product-detail-price';
     price.setAttribute('aria-label', 'Price');
-    price.textContent = formatPrice(product.price);
+    // price.textContent = formatPrice(product.price);
     info.append(price);
-  }
+  }*/
 
   if (product.description) {
     const description = document.createElement('div');
@@ -264,37 +326,44 @@ export default async function decorate(block) {
     info.append(description);
   }
 
-  const quantityControl = createQuantityControl();
-  info.append(quantityControl);
+  const actionsTitle = document.createElement('p');
+  actionsTitle.className = 'article-action-title';
+  // actionsTitle.textContent = 'Enjoyed this article?';
+
+  info.append(actionsTitle);
 
   const actions = document.createElement('div');
-  actions.className = 'product-detail-actions';
-  if (product.cta) {
-    const cta = product.cta.cloneNode(true);
-    cta.classList.add('button', 'primary');
-    actions.append(cta);
-  } else {
-    const cta = document.createElement('button');
-    cta.type = 'button';
-    cta.className = 'button primary';
-    cta.textContent = 'Add to cart';
-    cta.addEventListener('click', () => {
-      const qtyInput = block.querySelector('#product-detail-qty');
-      const quantity = parseInt(qtyInput?.value, 10) || 1;
-      addToCart(buildCartProduct(product), quantity);
-      const originalText = 'Add to cart';
-      cta.textContent = 'Added to cart';
-      cta.disabled = true;
-      window.setTimeout(() => {
-        cta.textContent = originalText;
-        cta.disabled = false;
+  actions.className = 'article-actions';
+
+  const readButton = document.createElement('a');
+  readButton.href = '#';
+  readButton.className = 'button primary';
+  readButton.textContent = 'Subscribe';
+
+  const shareButton = document.createElement('button');
+  shareButton.className = 'button secondary';
+  shareButton.textContent = 'Share Article';
+
+  shareButton.addEventListener('click', async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: product.title,
+        url: window.location.href,
+      });
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      shareButton.textContent = 'Link Copied';
+
+      setTimeout(() => {
+        shareButton.textContent = 'Share Article';
       }, 2000);
-    });
-    actions.append(cta);
-  }
+    }
+  });
+
+  actions.append(readButton, shareButton);
   info.append(actions);
 
+  // IMPORTANT
   layout.append(gallery, info);
   block.append(layout);
-  setProductJsonLd(product);
 }
